@@ -1,13 +1,13 @@
-pacman::p_load(magrittr, rvest, readxl, dplyr, maps, ggplot2, reshape2, shiny, ggiraph, RColorBrewer, data.table)
+pacman::p_load(maps, ggplot2, shiny, ggiraph, RColorBrewer, data.table)
 
 # Load in data
 data <- read.csv("C:/Users/rbender1/Desktop/csss539final/final_shiny_df.csv") # this needs to change
+setDT(data)
+# Multiply rates by 100K to be per 100K
+cols_transform <- c("mean_value_lri", "upper_value_lri", "lower_value_lri")
+data[, (cols_transform) := lapply(.SD, "*", 100000), .SDcols = cols_transform]
 
-# Next, we load in our world data with geographical coordinates directly from package *ggplot2*. These data 
-# contain geographical coordinates of all countries worldwide, which we'll later need to plot the worldmaps.
-
-library(maps)
-library(ggplot2)
+# Load in world data with geographical coordinates directly from ggplot2
 world_data <- ggplot2::map_data('world')
 world_data <- fortify(world_data)
 
@@ -58,8 +58,8 @@ worldMaps <- function(df, world_data, input){
   # Specify the plot for the world map
   g <- ggplot() + geom_map_interactive(data = plotdf, map = world_data, color = 'gray70', 
                                        (aes(long, lat, map_id = region, fill = Value, 
-                                            tooltip = sprintf("%s<br/>%s", region, Value)))) +
-    scale_fill_gradientn(colours = brewer.pal(5, "RdBu"), na.value = 'white') +
+                                            tooltip = sprintf("%s<br/>%s", region, round(Value, 3))))) +
+    scale_fill_gradientn(colours = brewer.pal(5, "YlOrRd"), na.value = 'white', trans = "log", label = function(x) sprintf("%.2f", x), limits = c(0.1,600)) +
     labs(title = NULL, x = NULL, y = NULL, caption = capt) +
     my_theme()
 

@@ -26,7 +26,7 @@ location_ids <- locs$location_id
 # rate and incidence
 # under 5
 # level 3 locations
-lri_df <- get_outputs('cause', cause_id=322, gbd_round_id=6, metric_id = 3, measure_id =6, age_group_id = 1, location_id = location_ids, decomp_step = 'step5')[,-c('age_group_id', 'age_group_name')]
+lri_df <- get_outputs('cause', cause_id = 322, gbd_round_id = 6, metric_id = 3, measure_id = 1, age_group_id = 1, location_id = location_ids, decomp_step = 'step5')[,-c('age_group_id', 'age_group_name')]
 setnames(lri_df, c("val", "upper", "lower"), c("mean_value_lri", "upper_value_lri", "lower_value_lri"))
 
 hib_df <- get_covariate_estimates(covariate_id = 47, year_id = 2019,location_id = location_ids, gbd_round_id = 6, decomp_step = 'step4')[,-c('age_group_id', 'age_group_name', 'covariate_id', 'covariate_name_short', 'model_version_id')]
