@@ -1,9 +1,9 @@
 # Define UI for app that draws a histogram ----
-library(ggplot2,readr,ggformula)
+pacman::p_load(ggplot2,readr,ggformula,shiny)
 ui <- fluidPage(
   
   # App title ----
-  titlePanel("Incidence of LRI under 5 years old by HIB or PCV3 vaccination rates"),
+  titlePanel("Incidence of LRI under 5 years old by Hib3 or PCV3 vaccination rates"),
   
   # Sidebar layout with input and output definitions ----
   sidebarLayout(
@@ -20,7 +20,7 @@ ui <- fluidPage(
       ),
       radioButtons(inputId = "covariate",
                    label = c("Covariate:"),
-                   choices = c("Hib vaccination", "Pcv3 vaccination")
+                   choices = c("Hib3 vaccination", "PCV3 vaccination")
       ),
       radioButtons(inputId = "ci",
                    label = c("Confidence level:"),

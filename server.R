@@ -1,5 +1,5 @@
 # Define server logic required to draw a histogram ----
-library(ggplot2,readr,ggformula)
+pacman::p_load(ggplot2,readr,ggformula,shiny)
 data <- read.csv("~/Desktop/final_shiny_bintzc_rbender/final_shiny_df.csv") # this needs to change
 server <- function(input, output) {
 
@@ -62,7 +62,7 @@ server <- function(input, output) {
       ggplot(data, aes(x=mean_value_hib, y=mean_value_lri)) +
         geom_point(size=2, shape=24)+
         geom_smooth(aes(x=mean_value_hib, y=mean_value_lri), method = 'lm',level=as.numeric(input$ci)) +
-        xlab("HIB vaccination rate") + ylab("LRI incidence rate")+
+        xlab("Hib3 vaccination rate") + ylab("LRI incidence rate")+
         goldenScatterCAtheme
       
     }
@@ -71,7 +71,7 @@ server <- function(input, output) {
       ggplot(data, aes(x=mean_value_hib, y=mean_value_lri)) +
         geom_point(size=2, shape=24) +
         geom_smooth(aes(x=mean_value_hib, y=mean_value_lri), method = 'gam',level=as.numeric(input$ci))+
-        xlab("HIB vaccination rate") + ylab("LRI incidence rate")+
+        xlab("Hib3 vaccination rate") + ylab("LRI incidence rate")+
         goldenScatterCAtheme
     }
     
@@ -79,7 +79,7 @@ server <- function(input, output) {
       ggplot(data, aes(x=mean_value_hib, y=mean_value_lri)) +
         geom_point(size=2, shape=24) +
         geom_smooth(aes(x=mean_value_hib, y=mean_value_lri), method = 'loess',level=as.numeric(input$ci))+
-        xlab("HIB vaccination rate") + ylab("LRI incidence rate")+
+        xlab("Hib3 vaccination rate") + ylab("LRI incidence rate")+
         goldenScatterCAtheme
     }
     
@@ -87,7 +87,7 @@ server <- function(input, output) {
       ggplot(data, aes(x=mean_value_hib, y=mean_value_lri)) +
         geom_point(size=2, shape=24) +
         geom_smooth(aes(x=mean_value_hib, y=mean_value_lri), method = 'lm', formula = y~x+I(x^2),level=as.numeric(input$ci))+
-        xlab("HIB vaccination rate") + ylab("LRI incidence rate")+
+        xlab("Hib3 vaccination rate") + ylab("LRI incidence rate")+
         goldenScatterCAtheme
     }
     
@@ -95,7 +95,7 @@ server <- function(input, output) {
       ggplot(data, aes(x=mean_value_hib, y=mean_value_lri)) +
         geom_point(size=2, shape=24) +
         geom_smooth(aes(x=mean_value_hib, y=mean_value_lri), method = 'lm', formula = y ~ poly(x, 5),level=as.numeric(input$ci))+
-        xlab("HIB vaccination rate") + ylab("LRI incidence rate")+
+        xlab("Hib3 vaccination rate") + ylab("LRI incidence rate")+
         goldenScatterCAtheme
     }
    
