@@ -23,16 +23,17 @@ invisible(sapply(list.files("/share/cc_resources/libraries/current/r/", full.nam
 locs <- get_location_metadata(gbd_round_id = 6, decomp_step = 'step5', location_set_id = 35)
 locs <- locs[level==3]
 location_ids <- locs$location_id
+years <- c(1990, 1995, 2000, 2005, 2010, 2015, 2019)
 # rate and incidence
 # under 5
 # level 3 locations
-lri_df <- get_outputs('cause', cause_id = 322, gbd_round_id = 6, metric_id = 3, measure_id = 1, age_group_id = 1, location_id = location_ids, decomp_step = 'step5')[,-c('age_group_id', 'age_group_name')]
+lri_df <- get_outputs('cause', cause_id = 322, gbd_round_id = 6, year_id = years, metric_id = 3, measure_id = 6, age_group_id = 1, location_id = location_ids, decomp_step = 'step5')[,-c('age_group_id', 'age_group_name')]
 setnames(lri_df, c("val", "upper", "lower"), c("mean_value_lri", "upper_value_lri", "lower_value_lri"))
 
-hib_df <- get_covariate_estimates(covariate_id = 47, year_id = 2019,location_id = location_ids, gbd_round_id = 6, decomp_step = 'step4')[,-c('age_group_id', 'age_group_name', 'covariate_id', 'covariate_name_short', 'model_version_id')]
+hib_df <- get_covariate_estimates(covariate_id = 47, year_id = years, location_id = location_ids, gbd_round_id = 6, decomp_step = 'step4')[,-c('age_group_id', 'age_group_name', 'covariate_id', 'covariate_name_short', 'model_version_id')]
 setnames(hib_df, c("mean_value", "upper_value", "lower_value"), c("mean_value_hib", "upper_value_hib", "lower_value_hib"))
 
-PCV3_df <- get_covariate_estimates(covariate_id = 210, location_id = location_ids, gbd_round_id = 6, decomp_step = 'step4')[,-c('age_group_id', 'age_group_name', 'covariate_id', 'covariate_name_short', 'model_version_id')]
+PCV3_df <- get_covariate_estimates(covariate_id = 210, year_id = years, location_id = location_ids, gbd_round_id = 6, decomp_step = 'step4')[,-c('age_group_id', 'age_group_name', 'covariate_id', 'covariate_name_short', 'model_version_id')]
 setnames(PCV3_df, c("mean_value", "upper_value", "lower_value"), c("mean_value_pcv3", "upper_value_pcv3", "lower_value_pcv3"))
 
 lri_hib <- merge(lri_df, hib_df, by = c('location_id', 'sex_id', 'year_id', 'location_name', 'sex'))

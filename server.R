@@ -1,8 +1,38 @@
 # Define server logic required to draw a scatt plot ----
-pacman::p_load(ggplot2,readr,ggformula,shiny)
-data <- read.csv("~/Desktop/csss539final/final_shiny_df.csv") # this needs to change
-server <- function(input, output) {
+pacman::p_load(ggplot2, readr, ggformula, shiny, ggiraph, RColorBrewer, data.table)
 
+# Load in data
+data <- fread("C:/Users/rbender1/Desktop/csss539final/final_shiny_df.csv") # this needs to change
+data <- data[year_id == 2019]
+
+# Multiply rates by 100K to be per 100K
+cols_transform <- c("mean_value_lri", "upper_value_lri", "lower_value_lri")
+data[, (cols_transform) := lapply(.SD, "*", 100000), .SDcols = cols_transform]
+
+# Load in world data with geographical coordinates directly from ggplot2
+world_data <- ggplot2::map_data('world')
+world_data <- fortify(world_data)
+
+# Change some of the names in world_data to match IHME names
+old_names <- c("Antigua", "Barbuda", "Bolivia", "Brunei", "Ivory Coast", "Czech Republic", "Micronesia", "UK", 
+               "Iran", "Nevis", "Saint Kitts", "South Korea", "Laos",
+               "North Korea", "Russia", "Syria", "Trinidad", "Tobago", 
+               "Taiwan", "Tanzania", "USA", "Grenadines", "Saint Vincent", 
+               "Venezuela", "Vietnam", "Cape Verde",
+               "Moldova", "Swaziland", "Republic of Congo", "Virgin Islands")
+new_names <- c(rep("Antigua and Barbuda", 2), "Bolivia (Plurinational State of)", "Brunei Darussalam", "Côte d'Ivoire", "Czechia", "Micronesia (Federated States of)", "United Kingdom",
+               "Iran (Islamic Republic of)", rep("Saint Kitts and Nevis", 2), "Republic of Korea", "Lao People's Democratic Republic",
+               "Democratic People's Republic of Korea", "Russian Federation", "Syrian Arab Republic", rep("Trinidad and Tobago", 2), 
+               "Taiwan (Province of China)", "United Republic of Tanzania", "United States of America", rep("Saint Vincent and the Grenadines", 2), 
+               "Venezuela (Bolivarian Republic of)", "Viet Nam", "Cabo Verde",
+               "Republic of Moldova", "Eswatini", "Congo", "United States Virgin Islands")
+
+for (i in 1:length(old_names)){
+  world_data$region[world_data$region == old_names[i]] <- new_names[i]
+}
+
+# Start server function
+server <- function(input, output) {
 
   output$scatterPlot <- renderPlot({
     
@@ -56,22 +86,25 @@ server <- function(input, output) {
     req(input$covariate)
     req(input$ci)
 
-    if(input$covariate == "Hib3 vaccination") {
-    
+ if(input$covariate == "Hib3 vaccination") {
+      column <- "mean_value_hib"
+    } else if (input$covariate == "PCV3 vaccination"){
+      column <- "mean_value_pcv3"
+    }
+
     if(input$fit == "LM"){
-      ggplot(data, aes(x=mean_value_hib, y=mean_value_lri)) +
+      ggplot(data, aes(x=get(column), y=mean_value_lri)) +
         geom_point(size=2, shape=24)+
-        geom_smooth(aes(x=mean_value_hib, y=mean_value_lri), method = 'lm',level=as.numeric(input$ci)) +
-        xlab("Hib3 vaccination rate") + ylab("LRI incidence rate")+
+        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'lm',level=as.numeric(input$ci)) +
+        xlab(paste(input$covariate, "rate")) + ylab("LRI incidence rate")+
         goldenScatterCAtheme
-      
     }
   
     else if (input$fit == "GAM"){
       ggplot(data, aes(x=mean_value_hib, y=mean_value_lri)) +
         geom_point(size=2, shape=24) +
         geom_smooth(aes(x=mean_value_hib, y=mean_value_lri), method = 'gam',level=as.numeric(input$ci))+
-        xlab("Hib3 vaccination rate") + ylab("LRI incidence rate")+
+        xlab(paste(input$covariate, "rate")) + ylab("LRI incidence rate")+
         goldenScatterCAtheme
     }
     
@@ -79,7 +112,7 @@ server <- function(input, output) {
       ggplot(data, aes(x=mean_value_hib, y=mean_value_lri)) +
         geom_point(size=2, shape=24) +
         geom_smooth(aes(x=mean_value_hib, y=mean_value_lri), method = 'loess',level=as.numeric(input$ci))+
-        xlab("Hib3 vaccination rate") + ylab("LRI incidence rate")+
+        xlab(paste(input$covariate, "rate")) + ylab("LRI incidence rate")+
         goldenScatterCAtheme
     }
     
@@ -87,7 +120,7 @@ server <- function(input, output) {
       ggplot(data, aes(x=mean_value_hib, y=mean_value_lri)) +
         geom_point(size=2, shape=24) +
         geom_smooth(aes(x=mean_value_hib, y=mean_value_lri), method = 'lm', formula = y~x+I(x^2),level=as.numeric(input$ci))+
-        xlab("Hib3 vaccination rate") + ylab("LRI incidence rate")+
+        xlab(paste(input$covariate, "rate")) + ylab("LRI incidence rate")+
         goldenScatterCAtheme
     }
     
@@ -95,90 +128,11 @@ server <- function(input, output) {
       ggplot(data, aes(x=mean_value_hib, y=mean_value_lri)) +
         geom_point(size=2, shape=24) +
         geom_smooth(aes(x=mean_value_hib, y=mean_value_lri), method = 'lm', formula = y ~ poly(x, 5),level=as.numeric(input$ci))+
-        xlab("Hib3 vaccination rate") + ylab("LRI incidence rate")+
+        xlab(paste(input$covariate, "rate")) + ylab("LRI incidence rate")+
         goldenScatterCAtheme
     }
-   
-    
-    }
-    
-    else if(input$covariate == "PCV3 vaccination") {
-      
-      if(input$fit == "LM"){
-        ggplot(data, aes(x=mean_value_pcv3, y=mean_value_lri)) +
-          geom_point(size=2, shape=24)+
-          geom_smooth(aes(x=mean_value_pcv3, y=mean_value_lri), method = 'lm', level=as.numeric(input$ci))+
-          xlab("PCV3 vaccination rate") + ylab("LRI incidence rate")+
-          goldenScatterCAtheme
-        
-      }
-      
-      else if (input$fit == "GAM"){
-        ggplot(data, aes(x=mean_value_pcv3, y=mean_value_lri)) +
-          geom_point(size=2, shape=24) +
-          geom_smooth(aes(x=mean_value_pcv3, y=mean_value_lri), method = 'gam',level=as.numeric(input$ci))+
-          xlab("PCV3 vaccination rate") + ylab("LRI incidence rate")+
-          goldenScatterCAtheme
-      }
-      
-      else if (input$fit == "Loess"){
-        ggplot(data, aes(x=mean_value_pcv3, y=mean_value_lri)) +
-          geom_point(size=2, shape=24) +
-          geom_smooth(aes(x=mean_value_pcv3, y=mean_value_lri), method = 'loess',level=as.numeric(input$ci))+
-          xlab("PCV3 vaccination rate") + ylab("LRI incidence rate")+
-          goldenScatterCAtheme
-      }
-      
-      else if (input$fit == "Quadratic"){
-        ggplot(data, aes(x=mean_value_pcv3, y=mean_value_lri)) +
-          geom_point(size=2, shape=24) +
-          geom_smooth(aes(x=mean_value_pcv3, y=mean_value_lri), method = 'lm', formula = y~x+I(x^2),level=as.numeric(input$ci))+
-          xlab("PCV3 vaccination rate") + ylab("LRI incidence rate")+
-          goldenScatterCAtheme
-      }
-      
-      else if (input$fit == "5th order polynomial"){
-        ggplot(data, aes(x=mean_value_pcv3, y=mean_value_lri)) +
-          geom_point(size=2, shape=24) +
-          geom_smooth(aes(x=mean_value_pcv3, y=mean_value_lri), method = 'lm', formula = y ~ poly(x, 5),level=as.numeric(input$ci))+
-          xlab("PCV3 vaccination rate") + ylab("LRI incidence rate")+
-          goldenScatterCAtheme
-      }
-      
-      
-    }
-    
     
   })
-  
-  # Load in data
-  data <- read.csv("~/Desktop/csss539final/final_shiny_df.csv") # this needs to change
-  setDT(data)
-  # Multiply rates by 100K to be per 100K
-  cols_transform <- c("mean_value_lri", "upper_value_lri", "lower_value_lri")
-  data[, (cols_transform) := lapply(.SD, "*", 100000), .SDcols = cols_transform]
-  
-  # Load in world data with geographical coordinates directly from ggplot2
-  world_data <- ggplot2::map_data('world')
-  world_data <- fortify(world_data)
-  
-  # Change some of the names in world_data to match IHME names
-  old_names <- c("Antigua", "Barbuda", "Bolivia", "Brunei", "Ivory Coast", "Czech Republic", "Micronesia", "UK", 
-                 "Iran", "Nevis", "Saint Kitts", "South Korea", "Laos",
-                 "North Korea", "Russia", "Syria", "Trinidad", "Tobago", 
-                 "Taiwan", "Tanzania", "USA", "Grenadines", "Saint Vincent", 
-                 "Venezuela", "Vietnam", "Cape Verde",
-                 "Moldova", "Swaziland", "Republic of Congo", "Virgin Islands")
-  new_names <- c(rep("Antigua and Barbuda", 2), "Bolivia (Plurinational State of)", "Brunei Darussalam", "Côte d'Ivoire", "Czechia", "Micronesia (Federated States of)", "United Kingdom",
-                 "Iran (Islamic Republic of)", rep("Saint Kitts and Nevis", 2), "Republic of Korea", "Lao People's Democratic Republic",
-                 "Democratic People's Republic of Korea", "Russian Federation", "Syrian Arab Republic", rep("Trinidad and Tobago", 2), 
-                 "Taiwan (Province of China)", "United Republic of Tanzania", "United States of America", rep("Saint Vincent and the Grenadines", 2), 
-                 "Venezuela (Bolivarian Republic of)", "Viet Nam", "Cabo Verde",
-                 "Republic of Moldova", "Eswatini", "Congo", "United States Virgin Islands")
-  
-  for (i in 1:length(old_names)){
-    world_data$region[world_data$region == old_names[i]] <- new_names[i]
-  }
   
   # Define the function for building world map
   # Inputs: world data, input data with LRI incidence
@@ -210,7 +164,8 @@ server <- function(input, output) {
     g <- ggplot() + geom_map_interactive(data = plotdf, map = world_data, color = 'gray70', 
                                          (aes(long, lat, map_id = region, fill = Value, 
                                               tooltip = sprintf("%s<br/>%s", region, round(Value, 3))))) +
-      scale_fill_gradientn(colours = brewer.pal(5, "YlOrRd"), na.value = 'white', trans = "log", label = function(x) sprintf("%.2f", x), limits = c(0.1,600)) +
+      scale_fill_gradientn(colours = brewer.pal(5, "YlOrRd"), na.value = 'white', trans = "log", label = function(x) sprintf("%.2f", x), 
+        limits = c(min(df$lower_value_lri),max(df$upper_value_lri))) +
       labs(title = NULL, x = NULL, y = NULL, caption = capt) +
       my_theme()
     

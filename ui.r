@@ -1,12 +1,10 @@
 # Define UI for app that draws a histogram ----
-pacman::p_load(ggplot2,readr,ggformula,shiny)
+pacman::p_load(ggplot2, readr, ggformula, shiny, ggiraph, RColorBrewer, data.table)
 ui <- fluidPage(
   
   # App title ----
   titlePanel("Incidence of LRI under 5 years old by Hib3 or PCV3 vaccination rates"),
-  
-  
-    
+      
     # Main panel for displaying outputs ----
     mainPanel(
       tabsetPanel(type = "tabs", id = "tabselected",
