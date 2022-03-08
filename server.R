@@ -3,7 +3,6 @@ pacman::p_load(ggplot2, readr, ggformula, shiny, ggiraph, RColorBrewer, data.tab
 
 # Load in data
 data <- fread("C:/Users/rbender1/Desktop/csss539final/final_shiny_df.csv") # this needs to change
-data <- data[year_id == 2019]
 
 # Multiply rates by 100K to be per 100K
 cols_transform <- c("mean_value_lri", "upper_value_lri", "lower_value_lri")
@@ -139,6 +138,10 @@ server <- function(input, output) {
   # Confidence interval level selected in R Shiny app
   
   worldMaps <- function(df, world_data, input){
+    # Subset to the desired year
+    yr_id <- input$year
+    df <- df[year_id == yr_id]
+    
     
     # Function for setting the aesthetics of the plot
     my_theme <- function () { 
@@ -155,15 +158,21 @@ server <- function(input, output) {
     
     # Add the data the user wants to see to the geographical world data
     plotdf <- merge(world_data, df, by.x = "region", by.y = "location_name")
-    setnames(plotdf, input, "Value")
-    
-    # Create caption with the data source to show underneath the map
-    capt <- paste0("LRI Incidence estimation range")
-    
+    if(input$ui_level == 5){
+      column <- "lower_value_lri"
+      capt <- paste0("5th percentile LRI incidence estimate")
+    } else if (input$ui_level == 50){
+      column <- "mean_value_lri"
+      capt <- paste0("Mean LRI incdence estimate")
+    } else if (input$ui_level == 95){
+      column <- "upper_value_lri"
+      capt <- paste0("95th percentile LRI incidence estimate")
+    }
+        
     # Specify the plot for the world map
     g <- ggplot() + geom_map_interactive(data = plotdf, map = world_data, color = 'gray70', 
-                                         (aes(long, lat, map_id = region, fill = Value, 
-                                              tooltip = sprintf("%s<br/>%s", region, round(Value, 3))))) +
+                                         (aes(long, lat, map_id = region, fill = get(column), 
+                                              tooltip = sprintf("%s<br/>%s", region, round(get(column), 1))))) +
       scale_fill_gradientn(colours = brewer.pal(5, "YlOrRd"), na.value = 'white', trans = "log", label = function(x) sprintf("%.2f", x), 
         limits = c(min(df$lower_value_lri),max(df$upper_value_lri))) +
       labs(title = NULL, x = NULL, y = NULL, caption = capt) +
@@ -174,8 +183,10 @@ server <- function(input, output) {
   
   # Create the interactive world map
   output$distPlot <- renderGirafe({
-    req(input$ui_level)
-    ggiraph(code = print(worldMaps(data, world_data, input$ui_level)))
+    # Create the plots with each uncertainty level
+    ggmean <- worldMaps(data, world_data, input = list(ui_level = 50, year = input$year))
+    ggadjust <- worldMaps(data, world_data, input)
+    girafe(ggobj = plot_grid(ggmean, ggadjust), width_svg = 8, height_svg = 4)
   })
   
 }

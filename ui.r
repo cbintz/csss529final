@@ -1,5 +1,5 @@
 # Define UI for app that draws a histogram ----
-pacman::p_load(ggplot2, readr, ggformula, shiny, ggiraph, RColorBrewer, data.table)
+pacman::p_load(ggplot2, readr, ggformula, shiny, ggiraph, RColorBrewer, data.table, cowplot)
 ui <- fluidPage(
   
   # App title ----
@@ -33,38 +33,41 @@ ui <- fluidPage(
                              ),
                              mainPanel (
                                plotOutput(outputId = "scatterPlot")
-                             )),
+                             )
+                             ),
+                           fluidRow(
+                             column(10,
+                                    h4("Year"),
+                                    sliderInput('year', 'Year', 
+                                                min=1990, max=2019, value=2019, sep = "", 
+                                                step=5, round=0)))
                  
       
                   ),
                   tabPanel("Map",   # Sidebar layout with input and output definitions
                            sidebarLayout(
                              
-                             # Sidebar panel for inputs 
-                             sidebarPanel(
-                               
-                               # First input: Type of data
-                               selectInput(inputId = "ui_level",
-                                           label = "Choose the uncertainty level you want to see:",
-                                           choices = list("lower_value_lri", "mean_value_lri", "upper_value_lri")),
-                             ),
-                             
-                             # Main panel for displaying outputs
-                             mainPanel(
-                               
-                               
-                               # Hide errors
-                               tags$style(type = "text/css",
-                                          ".shiny-output-error { visibility: hidden; }",
-                                          ".shiny-output-error:before { visibility: hidden; }"),
-                               
-                               # Output: interactive world map
-                               girafeOutput("distPlot")
+                             # Output: interactive world map
+                             mainPanel(width = 40,
+                                       fluidRow(girafeOutput("distPlot")),
+
+                             fluidRow(
+                               column(10,
+                                      h4("UI level"),
+                                      sliderInput('ui_level', 'UI Level', 
+                                                  min=5, max=95, value=50, 
+                                                  step=45, round=0)),
+                               column(10,
+                                      h4("Year"),
+                                      sliderInput('year', 'Year', 
+                                                  min=1990, max=2019, value=2019, sep = "",
+                                                  step=5, round=0))
                                
                              )
-                           ))
+                           )
+                             )
       
     )
     )
-  
+  )
 )
