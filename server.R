@@ -2,7 +2,7 @@
 pacman::p_load(ggplot2, readr, ggformula, shiny, ggiraph, RColorBrewer, data.table)
 
 # Load in data
-data <- fread("C:/Users/rbender1/Desktop/csss539final/final_shiny_df.csv") # this needs to change
+data <- fread("~/Desktop/csss539final/final_shiny_df.csv") # this needs to change
 
 # Multiply rates by 100K to be per 100K
 cols_transform <- c("mean_value_lri", "upper_value_lri", "lower_value_lri")
@@ -34,6 +34,9 @@ for (i in 1:length(old_names)){
 server <- function(input, output) {
 
   output$scatterPlot <- renderPlot({
+    yr_id <- input$year
+    data <- data[year_id == yr_id]
+    
     
     goldenScatterCAtheme <- theme(
       ## Removes main plot gray background
