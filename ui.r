@@ -1,9 +1,9 @@
 # Define UI for app that draws a histogram ----
-pacman::p_load(ggplot2, readr, ggformula, shiny, ggiraph, RColorBrewer, data.table, cowplot)
+pacman::p_load(ggplot2, readr, ggformula, shiny, ggiraph, RColorBrewer, data.table, cowplot, googlesheets4)
 ui <- fluidPage(
   
   # App title ----
-  titlePanel("Incidence of LRI under 5 years old by Hib3 or PCV3 vaccination rates"),
+  titlePanel("Incidence of LRI in children under 5 years old"),
       
     # Main panel for displaying outputs ----
     mainPanel(
@@ -45,29 +45,24 @@ ui <- fluidPage(
       
                   ),
                   tabPanel("Map",   # Sidebar layout with input and output definitions
-                           sidebarLayout(
                              
-                             # Output: interactive world map
-                             mainPanel(width = 40,
-                                       fluidRow(girafeOutput("distPlot"))),
+                            # Sliders
+                            fluidRow(
+                             column(6,
+                                    sliderInput('year', 'Year', 
+                                                min=1990, max=2019, value=2019, sep = "",
+                                                step=5, round=0)),
+                             column(6,
+                                    sliderInput('ui_level', 'UI Level', 
+                                                min=5, max=95, value=50, 
+                                                step=45, round=0))
+                             
+                           ),
+                           # Output: Interactive world map
+                           girafeOutput("distPlot")
 
-                             fluidRow(
-                               column(10,
-                                      h4("UI level"),
-                                      sliderInput('ui_level', 'UI Level', 
-                                                  min=5, max=95, value=50, 
-                                                  step=45, round=0)),
-                               column(10,
-                                      h4("Year"),
-                                      sliderInput('year', 'Year', 
-                                                  min=1990, max=2019, value=2019, sep = "",
-                                                  step=5, round=0))
-                               
-                             )
-                           
-                             )
-      
     )
     )
   )
 )
+

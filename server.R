@@ -1,8 +1,10 @@
 # Define server logic required to draw a scatt plot ----
-pacman::p_load(ggplot2, readr, ggformula, shiny, ggiraph, RColorBrewer, data.table)
+pacman::p_load(ggplot2, readr, ggformula, shiny, ggiraph, RColorBrewer, data.table, cowplot, googlesheets4)
 
-# Load in data
-data <- fread("~/Desktop/csss539final/final_shiny_df.csv") # this needs to change
+# Load in data from Google Sheets
+gs4_deauth() # Don't require authentication, it is a public sheet
+data <- read_sheet("https://docs.google.com/spreadsheets/d/1odaGK89U5gNiO-GtyTWY6rfhq3WZ1fGteVhDabPAKl4/edit?usp=sharing")
+setDT(data)
 
 # Multiply rates by 100K to be per 100K
 cols_transform <- c("mean_value_lri", "upper_value_lri", "lower_value_lri")
@@ -140,7 +142,7 @@ server <- function(input, output) {
   # Inputs: world data, input data with LRI incidence
   # Confidence interval level selected in R Shiny app
   
-  worldMaps <- function(df, world_data, input){
+  worldMaps <- function(df, world_data, input, legend.p = "none"){
     # Subset to the desired year
     yr_id <- input$year
     df <- df[year_id == yr_id]
@@ -154,7 +156,9 @@ server <- function(input, output) {
                          panel.grid.major = element_blank(), 
                          panel.grid.minor = element_blank(),
                          panel.background = element_blank(), 
-                         legend.position = "bottom",
+                         legend.position = legend.p,
+                         legend.title = element_blank(),
+                         text = element_text(size = 24),
                          panel.border = element_blank(), 
                          strip.background = element_rect(fill = 'white', colour = 'white'))
     }
@@ -189,7 +193,8 @@ server <- function(input, output) {
     # Create the plots with each uncertainty level
     ggmean <- worldMaps(data, world_data, input = list(ui_level = 50, year = input$year))
     ggadjust <- worldMaps(data, world_data, input)
-    girafe(ggobj = plot_grid(ggmean, ggadjust), width_svg = 8, height_svg = 4)
+    legend_g <- get_legend(worldMaps(data, world_data, input, "right"))
+    girafe(ggobj = plot_grid(plot_grid(ggmean, ggadjust), legend_g, ncol = 2, rel_widths = c(1, .1)), width_svg = 12, height_svg = 4)
   })
   
 }
