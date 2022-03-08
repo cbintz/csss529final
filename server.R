@@ -36,9 +36,8 @@ for (i in 1:length(old_names)){
 server <- function(input, output) {
 
   output$scatterPlot <- renderPlot({
-    yr_id <- input$year
-    data <- data[year_id == yr_id]
-    
+    # subset to year of interest
+    data <- data[year_id == input$year_scatter]    
     
     goldenScatterCAtheme <- theme(
       ## Removes main plot gray background
@@ -96,7 +95,7 @@ server <- function(input, output) {
       column <- "mean_value_pcv3"
     }
 
-    if(input$fit == "LM"){
+    if(input$fit == "Linear"){
       ggplot(data, aes(x=get(column), y=mean_value_lri)) +
         geom_point(size=2, shape=24)+
         geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'lm',level=as.numeric(input$ci)) +
@@ -105,33 +104,33 @@ server <- function(input, output) {
     }
   
     else if (input$fit == "GAM"){
-      ggplot(data, aes(x=mean_value_hib, y=mean_value_lri)) +
+      ggplot(data, aes(x=get(column), y=mean_value_lri)) +
         geom_point(size=2, shape=24) +
-        geom_smooth(aes(x=mean_value_hib, y=mean_value_lri), method = 'gam',level=as.numeric(input$ci))+
+        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'gam',level=as.numeric(input$ci))+
         xlab(paste(input$covariate, "rate")) + ylab("LRI incidence rate")+
         goldenScatterCAtheme
     }
     
     else if (input$fit == "Loess"){
-      ggplot(data, aes(x=mean_value_hib, y=mean_value_lri)) +
+      ggplot(data, aes(x=get(column), y=mean_value_lri)) +
         geom_point(size=2, shape=24) +
-        geom_smooth(aes(x=mean_value_hib, y=mean_value_lri), method = 'loess',level=as.numeric(input$ci))+
+        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'loess',level=as.numeric(input$ci))+
         xlab(paste(input$covariate, "rate")) + ylab("LRI incidence rate")+
         goldenScatterCAtheme
     }
     
     else if (input$fit == "Quadratic"){
-      ggplot(data, aes(x=mean_value_hib, y=mean_value_lri)) +
+      ggplot(data, aes(x=get(column), y=mean_value_lri)) +
         geom_point(size=2, shape=24) +
-        geom_smooth(aes(x=mean_value_hib, y=mean_value_lri), method = 'lm', formula = y~x+I(x^2),level=as.numeric(input$ci))+
+        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'lm', formula = y~x+I(x^2),level=as.numeric(input$ci))+
         xlab(paste(input$covariate, "rate")) + ylab("LRI incidence rate")+
         goldenScatterCAtheme
     }
     
     else if (input$fit == "5th order polynomial"){
-      ggplot(data, aes(x=mean_value_hib, y=mean_value_lri)) +
+      ggplot(data, aes(x=get(column), y=mean_value_lri)) +
         geom_point(size=2, shape=24) +
-        geom_smooth(aes(x=mean_value_hib, y=mean_value_lri), method = 'lm', formula = y ~ poly(x, 5),level=as.numeric(input$ci))+
+        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'lm', formula = y ~ poly(x, 5),level=as.numeric(input$ci))+
         xlab(paste(input$covariate, "rate")) + ylab("LRI incidence rate")+
         goldenScatterCAtheme
     }
@@ -143,11 +142,7 @@ server <- function(input, output) {
   # Confidence interval level selected in R Shiny app
   
   worldMaps <- function(df, world_data, input, legend.p = "none"){
-    # Subset to the desired year
-    yr_id <- input$year
-    df <- df[year_id == yr_id]
-    
-    
+  
     # Function for setting the aesthetics of the plot
     my_theme <- function () { 
       theme_bw() + theme(axis.title = element_blank(),
@@ -170,7 +165,7 @@ server <- function(input, output) {
       capt <- paste0("5th percentile LRI incidence estimate")
     } else if (input$ui_level == 50){
       column <- "mean_value_lri"
-      capt <- paste0("Mean LRI incdence estimate")
+      capt <- paste0("Mean LRI incidence estimate")
     } else if (input$ui_level == 95){
       column <- "upper_value_lri"
       capt <- paste0("95th percentile LRI incidence estimate")
@@ -180,7 +175,7 @@ server <- function(input, output) {
     g <- ggplot() + geom_map_interactive(data = plotdf, map = world_data, color = 'gray70', 
                                          (aes(long, lat, map_id = region, fill = get(column), 
                                               tooltip = sprintf("%s<br/>%s", region, round(get(column), 1))))) +
-      scale_fill_gradientn(colours = brewer.pal(5, "YlOrRd"), na.value = 'white', trans = "log", label = function(x) sprintf("%.2f", x), 
+      scale_fill_gradientn(colours = brewer.pal(5, "YlOrRd"), na.value = 'white', trans = "log", label = function(x) round(x, 0), 
         limits = c(min(df$lower_value_lri),max(df$upper_value_lri))) +
       labs(title = NULL, x = NULL, y = NULL, caption = capt) +
       my_theme()
@@ -190,11 +185,13 @@ server <- function(input, output) {
   
   # Create the interactive world map
   output$distPlot <- renderGirafe({
+    # Subset to year of interest
+    data <- data[year_id == input$year_map]
     # Create the plots with each uncertainty level
     ggmean <- worldMaps(data, world_data, input = list(ui_level = 50, year = input$year))
     ggadjust <- worldMaps(data, world_data, input)
     legend_g <- get_legend(worldMaps(data, world_data, input, "right"))
-    girafe(ggobj = plot_grid(plot_grid(ggmean, ggadjust), legend_g, ncol = 2, rel_widths = c(1, .1)), width_svg = 12, height_svg = 4)
+    girafe(ggobj = plot_grid(plot_grid(ggmean, ggadjust), legend_g, ncol = 2, rel_widths = c(1, .1)), width_svg = 12, height_svg = 3)
   })
   
 }

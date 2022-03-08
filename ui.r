@@ -20,7 +20,7 @@ ui <- fluidPage(
                                
                                radioButtons(inputId = "fit",
                                             label = c("Data fit type:"),
-                                            choices = c("LM", "GAM" ,"Loess", "Quadratic", "5th order polynomial")
+                                            choices = c("Linear", "GAM" ,"Loess", "Quadratic", "5th order polynomial")
                                ),
                                radioButtons(inputId = "covariate",
                                             label = c("Covariate:"),
@@ -38,7 +38,7 @@ ui <- fluidPage(
                            fluidRow(
                              column(10,
                                     h4("Year"),
-                                    sliderInput('year', 'Year', 
+                                    sliderInput('year_scatter', 'Year', 
                                                 min=1990, max=2019, value=2019, sep = "", 
                                                 step=5, round=0)))
                  
@@ -49,7 +49,7 @@ ui <- fluidPage(
                             # Sliders
                             fluidRow(
                              column(6,
-                                    sliderInput('year', 'Year', 
+                                    sliderInput('year_map', 'Year', 
                                                 min=1990, max=2019, value=2019, sep = "",
                                                 step=5, round=0)),
                              column(6,
