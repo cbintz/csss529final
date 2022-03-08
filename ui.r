@@ -49,7 +49,7 @@ ui <- fluidPage(
                              
                              # Output: interactive world map
                              mainPanel(width = 40,
-                                       fluidRow(girafeOutput("distPlot")),
+                                       fluidRow(girafeOutput("distPlot"))),
 
                              fluidRow(
                                column(10,
@@ -64,7 +64,7 @@ ui <- fluidPage(
                                                   step=5, round=0))
                                
                              )
-                           )
+                           
                              )
       
     )
