@@ -3,7 +3,7 @@ pacman::p_load(ggplot2, readr, ggformula, shiny, ggiraph, RColorBrewer, data.tab
 ui <- fluidPage(
   
   # App title ----
-  titlePanel("Incidence of LRI in children under 5 years old"),
+  titlePanel("LRI incident cases per 1000 in children under 5"),
       
     # Main panel for displaying outputs ----
     mainPanel(
@@ -54,8 +54,8 @@ ui <- fluidPage(
                                                 step=5, round=0)),
                              column(6,
                                     sliderInput('ui_level', 'UI Level', 
-                                                min=5, max=95, value=50, 
-                                                step=45, round=0))
+                                                min=5, max=95, value=95, 
+                                                step=90, round=0))
                              
                            ),
                            # Output: Interactive world map

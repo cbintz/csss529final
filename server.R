@@ -6,9 +6,9 @@ gs4_deauth() # Don't require authentication, it is a public sheet
 data <- read_sheet("https://docs.google.com/spreadsheets/d/1odaGK89U5gNiO-GtyTWY6rfhq3WZ1fGteVhDabPAKl4/edit?usp=sharing")
 setDT(data)
 
-# Multiply rates by 100K to be per 100K
+# Multiply rates by 1000 to be per 1000
 cols_transform <- c("mean_value_lri", "upper_value_lri", "lower_value_lri")
-data[, (cols_transform) := lapply(.SD, "*", 100000), .SDcols = cols_transform]
+data[, (cols_transform) := lapply(.SD, "*", 1000), .SDcols = cols_transform]
 
 # Load in world data with geographical coordinates directly from ggplot2
 world_data <- ggplot2::map_data('world')
@@ -99,7 +99,7 @@ server <- function(input, output) {
       ggplot(data, aes(x=get(column), y=mean_value_lri)) +
         geom_point(size=2, shape=24)+
         geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'lm',level=as.numeric(input$ci)) +
-        xlab(paste(input$covariate, "rate")) + ylab("LRI incidence rate")+
+        xlab(paste(input$covariate, "proportion")) + ylab("LRI incidence rate per 1000")+
         goldenScatterCAtheme
     }
   
@@ -107,7 +107,7 @@ server <- function(input, output) {
       ggplot(data, aes(x=get(column), y=mean_value_lri)) +
         geom_point(size=2, shape=24) +
         geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'gam',level=as.numeric(input$ci))+
-        xlab(paste(input$covariate, "rate")) + ylab("LRI incidence rate")+
+        xlab(paste(input$covariate, "proportion")) + ylab("LRI incidence rate per 1000")+
         goldenScatterCAtheme
     }
     
@@ -115,7 +115,7 @@ server <- function(input, output) {
       ggplot(data, aes(x=get(column), y=mean_value_lri)) +
         geom_point(size=2, shape=24) +
         geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'loess',level=as.numeric(input$ci))+
-        xlab(paste(input$covariate, "rate")) + ylab("LRI incidence rate")+
+        xlab(paste(input$covariate, "proportion")) + ylab("LRI incidence rate per 1000")+
         goldenScatterCAtheme
     }
     
@@ -123,7 +123,7 @@ server <- function(input, output) {
       ggplot(data, aes(x=get(column), y=mean_value_lri)) +
         geom_point(size=2, shape=24) +
         geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'lm', formula = y~x+I(x^2),level=as.numeric(input$ci))+
-        xlab(paste(input$covariate, "rate")) + ylab("LRI incidence rate")+
+        xlab(paste(input$covariate, "proportion")) + ylab("LRI incidence rate per 1000")+
         goldenScatterCAtheme
     }
     
@@ -131,7 +131,7 @@ server <- function(input, output) {
       ggplot(data, aes(x=get(column), y=mean_value_lri)) +
         geom_point(size=2, shape=24) +
         geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'lm', formula = y ~ poly(x, 5),level=as.numeric(input$ci))+
-        xlab(paste(input$covariate, "rate")) + ylab("LRI incidence rate")+
+        xlab(paste(input$covariate, "proportion")) + ylab("LRI incidence rate per 1000")+
         goldenScatterCAtheme
     }
     
@@ -175,7 +175,7 @@ server <- function(input, output) {
     g <- ggplot() + geom_map_interactive(data = plotdf, map = world_data, color = 'gray70', 
                                          (aes(long, lat, map_id = region, fill = get(column), 
                                               tooltip = sprintf("%s<br/>%s", region, round(get(column), 1))))) +
-      scale_fill_gradientn(colours = brewer.pal(5, "YlOrRd"), na.value = 'white', trans = "log", label = function(x) round(x, 0), 
+      scale_fill_gradientn(colours = rev(brewer.pal(7, "RdBu")), na.value = 'white', trans = "log", label = function(x) round(x, 0), 
         limits = c(min(df$lower_value_lri),max(df$upper_value_lri))) +
       labs(title = NULL, x = NULL, y = NULL, caption = capt) +
       my_theme()
