@@ -70,6 +70,7 @@ server <- function(input, output) {
       
       ## Legend
       legend.key = element_rect(fill = NA, color = NA),
+      legend.position = "bottom",
       ## Remove unhelpful gray background
       
       ## Gridlines (in this case, horizontal from left axis only
@@ -96,41 +97,51 @@ server <- function(input, output) {
 
     if(input$fit == "Linear"){
       ggplot(data, aes(x=get(column), y=mean_value_lri)) +
-        geom_point(size=2, shape=24)+
-        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'lm',level=input$ui_level_scatter/100) +
+        geom_point(size=2, shape=21, alpha = 0.5, aes(fill = super_region_name))+
+        scale_fill_manual(values = c(brewer.pal(7, "RdBu")))+
+        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'lm',level=input$ui_level_scatter/100, color = "black") +
         xlab(paste(input$covariate, "proportion")) + ylab("LRI incidence rate per 1000")+
+        guides(fill = guide_legend(nrow = 3))+
         goldenScatterCAtheme
     }
   
     else if (input$fit == "GAM"){
       ggplot(data, aes(x=get(column), y=mean_value_lri)) +
-        geom_point(size=2, shape=24) +
-        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'gam',level=input$ui_level_scatter/100)+
+        geom_point(size=2, shape=21, alpha = 0.5, aes(fill = super_region_name))+
+        scale_fill_manual(values = c(brewer.pal(7, "RdBu")))+
+        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'gam',level=input$ui_level_scatter/100, color = "black")+
         xlab(paste(input$covariate, "proportion")) + ylab("LRI incidence rate per 1000")+
+        guides(fill = guide_legend(nrow = 3))+
         goldenScatterCAtheme
     }
     
     else if (input$fit == "Loess"){
       ggplot(data, aes(x=get(column), y=mean_value_lri)) +
-        geom_point(size=2, shape=24) +
-        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'loess',level=input$ui_level_scatter/100)+
+        geom_point(size=2, shape=21, alpha = 0.5, aes(fill = super_region_name))+
+        scale_fill_manual(values = c(brewer.pal(7, "RdBu")))+
+        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'loess',level=input$ui_level_scatter/100, color = "black")+
         xlab(paste(input$covariate, "proportion")) + ylab("LRI incidence rate per 1000")+
+        guides(fill = guide_legend(nrow = 3))+
         goldenScatterCAtheme
     }
     
     else if (input$fit == "Quadratic"){
       ggplot(data, aes(x=get(column), y=mean_value_lri)) +
-        geom_point(size=2, shape=24) +
-        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'lm', formula = y~x+I(x^2),level=input$ui_level_scatter/100)+
+        geom_point(size=2, shape=21, alpha = 0.5, aes(fill = super_region_name))+
+        scale_fill_manual(values = c(brewer.pal(7, "RdBu")))+
+        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'lm', formula = y~x+I(x^2),level=input$ui_level_scatter/100, color = "black")+
         xlab(paste(input$covariate, "proportion")) + ylab("LRI incidence rate per 1000")+
+        guides(fill = guide_legend(nrow = 3))+
         goldenScatterCAtheme
     }
     
     else if (input$fit == "5th order polynomial"){
       ggplot(data, aes(x=get(column), y=mean_value_lri)) +
-        geom_point(size=2, shape=24) +
-        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'lm', formula = y ~ poly(x, 5),level=input$ui_level_scatter/100)+
+        geom_point(size=2, shape=21, alpha = 0.5, aes(fill = super_region_name))+
+        scale_fill_manual(values = c(brewer.pal(7, "RdBu")))+
+        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'lm', formula = y ~ poly(x, 5),level=input$ui_level_scatter/100, color = "black")+
         xlab(paste(input$covariate, "proportion")) + ylab("LRI incidence rate per 1000")+
+        guides(fill = guide_legend(nrow = 3))+
         goldenScatterCAtheme
     }
     
