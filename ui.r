@@ -25,10 +25,6 @@ ui <- fluidPage(
                                radioButtons(inputId = "covariate",
                                             label = c("Covariate:"),
                                             choices = c("Hib3 vaccination", "PCV3 vaccination")
-                               ),
-                               radioButtons(inputId = "ci",
-                                            label = c("Confidence level:"),
-                                            choices = c(0.85,0.90,0.95)
                                )
                              ),
                              mainPanel (
@@ -40,6 +36,10 @@ ui <- fluidPage(
                                     h4("Year"),
                                     sliderInput('year_scatter', 'Year', 
                                                 min=1990, max=2019, value=2019, sep = "", 
+                                                step=5, round=0)),
+                             column(6,
+                                    sliderInput('ui_level_scatter', 'UI Level', 
+                                                min=5, max=95, value=95, 
                                                 step=5, round=0)))
                  
       

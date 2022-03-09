@@ -87,8 +87,7 @@ server <- function(input, output) {
     )
     req(input$fit)
     req(input$covariate)
-    req(input$ci)
-
+    req(input$ui_level_scatter)
  if(input$covariate == "Hib3 vaccination") {
       column <- "mean_value_hib"
     } else if (input$covariate == "PCV3 vaccination"){
@@ -98,7 +97,7 @@ server <- function(input, output) {
     if(input$fit == "Linear"){
       ggplot(data, aes(x=get(column), y=mean_value_lri)) +
         geom_point(size=2, shape=24)+
-        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'lm',level=as.numeric(input$ci)) +
+        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'lm',level=input$ui_level_scatter/100) +
         xlab(paste(input$covariate, "proportion")) + ylab("LRI incidence rate per 1000")+
         goldenScatterCAtheme
     }
@@ -106,7 +105,7 @@ server <- function(input, output) {
     else if (input$fit == "GAM"){
       ggplot(data, aes(x=get(column), y=mean_value_lri)) +
         geom_point(size=2, shape=24) +
-        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'gam',level=as.numeric(input$ci))+
+        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'gam',level=input$ui_level_scatter/100)+
         xlab(paste(input$covariate, "proportion")) + ylab("LRI incidence rate per 1000")+
         goldenScatterCAtheme
     }
@@ -114,7 +113,7 @@ server <- function(input, output) {
     else if (input$fit == "Loess"){
       ggplot(data, aes(x=get(column), y=mean_value_lri)) +
         geom_point(size=2, shape=24) +
-        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'loess',level=as.numeric(input$ci))+
+        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'loess',level=input$ui_level_scatter/100)+
         xlab(paste(input$covariate, "proportion")) + ylab("LRI incidence rate per 1000")+
         goldenScatterCAtheme
     }
@@ -122,7 +121,7 @@ server <- function(input, output) {
     else if (input$fit == "Quadratic"){
       ggplot(data, aes(x=get(column), y=mean_value_lri)) +
         geom_point(size=2, shape=24) +
-        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'lm', formula = y~x+I(x^2),level=as.numeric(input$ci))+
+        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'lm', formula = y~x+I(x^2),level=input$ui_level_scatter/100)+
         xlab(paste(input$covariate, "proportion")) + ylab("LRI incidence rate per 1000")+
         goldenScatterCAtheme
     }
@@ -130,7 +129,7 @@ server <- function(input, output) {
     else if (input$fit == "5th order polynomial"){
       ggplot(data, aes(x=get(column), y=mean_value_lri)) +
         geom_point(size=2, shape=24) +
-        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'lm', formula = y ~ poly(x, 5),level=as.numeric(input$ci))+
+        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'lm', formula = y ~ poly(x, 5),level=input$ui_level_scatter/100)+
         xlab(paste(input$covariate, "proportion")) + ylab("LRI incidence rate per 1000")+
         goldenScatterCAtheme
     }
