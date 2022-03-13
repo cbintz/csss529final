@@ -146,6 +146,34 @@ server <- function(input, output) {
     }
     
   })
+  output$hover_info <- renderUI({
+    if(input$covariate == "Hib3 vaccination") {
+      column <- "mean_value_hib"
+      label <- "HIB3 Vaccination proportion"
+    } else if (input$covariate == "PCV3 vaccination"){
+      column <- "mean_value_pcv3"
+      label <- "PCV3 Vaccination proportion"
+    }
+    
+    hover <- input$plot_hover
+    point <- nearPoints(data, hover, threshold = 5, maxpoints = 1, addDist = TRUE, xvar = column, yvar = "mean_value_lri")
+    
+     if (nrow(point) == 0) return(NULL)
+     
+     left_pct <- (hover$x - hover$domain$left) / (hover$domain$right - hover$domain$left)
+     top_pct <- (hover$domain$top - hover$y) / (hover$domain$top - hover$domain$bottom)
+     
+     left_px <- hover$range$left + left_pct * (hover$range$right - hover$range$left)-300
+     top_px <- hover$range$top + top_pct * (hover$range$bottom - hover$range$top)
+    
+     style <- paste0("position:absolute; z-index:100; background-color: rgba(245, 245, 245, 0.85); ",
+                   "left:", 400, "px; top:", 200, "px; wdith:", 200, "px;")
+      
+     wellPanel(
+       style = style,
+       p(HTML(paste0("<br> <b>", point$location_name, "</b> </br>",  "<b> <br> Incidence of LRI: </b>", sprintf("%.1f", point$mean_value_lri), "</br>","<br> <b>",label, ": </b>", sprintf("%.1f",point[[column]]), "</br>")))
+     )
+  })
   
   # Define the function for building world map
   # Inputs: world data, input data with LRI incidence
@@ -203,5 +231,7 @@ server <- function(input, output) {
     legend_g <- get_legend(worldMaps(data, world_data, input, "right"))
     girafe(ggobj = plot_grid(plot_grid(ggmean, ggadjust), legend_g, ncol = 2, rel_widths = c(1, .1)), width_svg = 12, height_svg = 3)
   })
+
   
 }
+

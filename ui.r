@@ -28,7 +28,9 @@ ui <- fluidPage(
                                )
                              ),
                              mainPanel (
-                               plotOutput(outputId = "scatterPlot")
+                               plotOutput(outputId = "scatterPlot",
+                                          hover = hoverOpts("plot_hover", delay = 20, delayType = "debounce")),
+                               uiOutput("hover_info")
                              )
                              ),
                            fluidRow(
