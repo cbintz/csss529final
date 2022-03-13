@@ -1,5 +1,5 @@
 # Define server logic required to draw a scatt plot ----
-pacman::p_load(ggplot2, readr, ggformula, shiny, ggiraph, RColorBrewer, data.table, cowplot, googlesheets4)
+pacman::p_load(ggplot2, readr, ggformula, shiny, ggiraph, RColorBrewer, data.table, cowplot, googlesheets4, MASS)
 
 # Load in data from Google Sheets
 gs4_deauth() # Don't require authentication, it is a public sheet
@@ -71,6 +71,7 @@ server <- function(input, output) {
       ## Legend
       legend.key = element_rect(fill = NA, color = NA),
       legend.position = "bottom",
+      #legend.title = element_blank(),
       ## Remove unhelpful gray background
       
       ## Gridlines (in this case, horizontal from left axis only
@@ -134,12 +135,56 @@ server <- function(input, output) {
         guides(fill = guide_legend(nrow = 3))+
         goldenScatterCAtheme
     }
+    else if (input$fit == "Robust quadratic"){
+      model_fit <- rlm(mean_value_lri ~ get(column) + I(get(column)^2),data = data, method = "MM")
+      new_data <- copy(data)
+      new_data <- new_data[, mean_value_lri := NA]
+      x <- predict(model_fit,newdata = new_data,interval = 'confidence',level=input$ui_level_scatter/100)
+      new_data[, mean_value_lri := x[,"fit"]]
+      new_data[, lower_value_lri := x[,"lwr"]]
+      new_data[, upper_value_lri := x[,"upr"]]
+      
+      
+      #new_data$mean_value_lri <- predict(model_fit,newdata = new_data,interval = 'confidence', level = 0.9)
+      ggplot(data=data, aes(x=get(column), y=mean_value_lri)) +
+        geom_point(size=2, shape=21, alpha = 0.5, aes(fill = super_region_name))+
+        scale_fill_manual(values = c(brewer.pal(7, "RdBu")))+
+        geom_line(data = new_data, aes(x=get(column), y=mean_value_lri,ymin=lower_value_lri,ymax=upper_value_lri),color = "black", size = 1)+
+        geom_ribbon(data = new_data, aes(x=get(column), y=mean_value_lri,ymin=lower_value_lri,ymax=upper_value_lri),alpha = .2)+
+        xlab(paste(input$covariate, "proportion")) + ylab("LRI incidence rate per 1000")+
+        guides(fill = guide_legend(nrow = 3))+
+        goldenScatterCAtheme
+    } 
+   
+    
     
     else if (input$fit == "5th order polynomial"){
       ggplot(data, aes(x=get(column), y=mean_value_lri)) +
         geom_point(size=2, shape=21, alpha = 0.5, aes(fill = super_region_name))+
         scale_fill_manual(values = c(brewer.pal(7, "RdBu")))+
         geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'lm', formula = y ~ poly(x, 5),level=input$ui_level_scatter/100, color = "black")+
+        xlab(paste(input$covariate, "proportion")) + ylab("LRI incidence rate per 1000")+
+        guides(fill = guide_legend(nrow = 3))+
+        goldenScatterCAtheme
+    }
+    else if (input$fit == "Robust linear"){
+   
+     
+       model_fit <- rlm(mean_value_lri ~ get(column),data = data, method = "MM")
+       new_data <- copy(data)
+       new_data <- new_data[, mean_value_lri := NA]
+       x <- predict(model_fit,newdata = new_data,interval = 'confidence',level=input$ui_level_scatter/100)
+       new_data[, mean_value_lri := x[,"fit"]]
+       new_data[, lower_value_lri := x[,"lwr"]]
+       new_data[, upper_value_lri := x[,"upr"]]
+       
+    
+      #new_data$mean_value_lri <- predict(model_fit,newdata = new_data,interval = 'confidence', level = 0.9)
+      ggplot(data=data, aes(x=get(column), y=mean_value_lri)) +
+        geom_point(size=2, shape=21, alpha = 0.5, aes(fill = super_region_name))+
+        scale_fill_manual(values = c(brewer.pal(7, "RdBu")))+
+        geom_line(data = new_data, aes(x=get(column), y=mean_value_lri,ymin=lower_value_lri,ymax=upper_value_lri),color = "black", size = 1)+
+        geom_ribbon(data = new_data, aes(x=get(column), y=mean_value_lri,ymin=lower_value_lri,ymax=upper_value_lri),alpha = .2)+
         xlab(paste(input$covariate, "proportion")) + ylab("LRI incidence rate per 1000")+
         guides(fill = guide_legend(nrow = 3))+
         goldenScatterCAtheme
