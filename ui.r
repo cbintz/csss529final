@@ -1,5 +1,5 @@
 # Define UI for app that draws a histogram ----
-pacman::p_load(ggplot2, readr, ggformula, shiny, ggiraph, RColorBrewer, data.table, cowplot, googlesheets4)
+pacman::p_load(ggplot2, readr, ggformula, shiny, ggiraph, RColorBrewer, data.table, cowplot, googlesheets4, MASS, estimatr)
 ui <- fluidPage(
   
   # App title ----
@@ -34,12 +34,18 @@ ui <- fluidPage(
                # Sidebar panel for inputs ----
                sidebarPanel(
                  
-                 # Input: Slider for the type of fit
-                 # options: LM, GAM, Loess, Quadratic, 5th order polynomial
+                 # Input: Slider for the degree of polynomial fit
+                 # Input: Checkbox for whether the fit is robust or not
+                 # Input: Which covariate to plot on the x axis
                  
-                 radioButtons(inputId = "fit",
-                              label = c("Data fit type:"),
-                              choices = c("Linear","Robust linear", "GAM" ,"Loess", "Quadratic", "Robust quadratic", "5th order polynomial")
+                 sliderInput(inputId = "fit",
+                             label = c("Degree of polynomial:"),
+                             min=1, max=5, value=1, 
+                             step=1, round=0
+                 ),
+                 checkboxInput(inputId = "robust",
+                             label = c("Robust"),
+                             value = FALSE
                  ),
                  radioButtons(inputId = "covariate",
                               label = c("Covariate:"),
