@@ -9,6 +9,8 @@ setDT(data)
 # Multiply rates by 1000 to be per 1000
 cols_transform <- c("mean_value_lri", "upper_value_lri", "lower_value_lri")
 data[, (cols_transform) := lapply(.SD, "*", 1000), .SDcols = cols_transform]
+data[, log_mean_value_lri := log(mean_value_lri)]
+
 
 # Load in world data with geographical coordinates directly from ggplot2
 world_data <- ggplot2::map_data('world')
@@ -37,8 +39,8 @@ server <- function(input, output) {
 
   output$scatterPlot <- renderPlot({
     # subset to year of interest
-    data <- data[year_id == input$year_scatter]    
-    
+    data <- data[year_id == input$year_scatter]  
+
     goldenScatterCAtheme <- theme(
       ## Removes main plot gray background
       panel.background = element_rect(fill = "white"), 
@@ -90,6 +92,14 @@ server <- function(input, output) {
     req(input$fit)
     req(input$covariate)
     req(input$ui_level_scatter)
+    breaks = as.numeric(quantile(data$log_mean_value_lri, probs = seq(0,1,0.25)))
+    labels = as.numeric(quantile(data$mean_value_lri, probs = seq(0,1,0.25)))
+    new_labels <- numeric(5)
+    for (label in 1:length(labels)){
+      new_labels[label] <- sprintf("%.0f", labels[label])  
+    }
+    limit_min  = min(data$log_mean_value_lri) - 1
+    limit_max  = max(data$log_mean_value_lri) + 1
  if(input$covariate == "Hib3 vaccination") {
       column <- "mean_value_hib"
     } else if (input$covariate == "PCV3 vaccination"){
@@ -97,60 +107,67 @@ server <- function(input, output) {
     }
 
     if(input$fit == "Linear"){
-      ggplot(data, aes(x=get(column), y=mean_value_lri)) +
-        geom_point(size=2, shape=21, alpha = 0.5, aes(fill = super_region_name))+
+     
+     
+      ggplot(data) +
+        geom_point(size=2, shape=21, alpha = 0.5, aes(fill = super_region_name, x=get(column), y=log_mean_value_lri))+
         scale_fill_manual(values = c(brewer.pal(7, "RdBu")))+
-        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'lm',level=input$ui_level_scatter/100, color = "black") +
+        geom_smooth(aes(x=get(column), y=log_mean_value_lri), method = 'lm',level=input$ui_level_scatter/100, color = "black") +
+        scale_y_continuous(breaks =breaks, labels = new_labels, limits = c(limit_min,limit_max))+
         xlab(paste(input$covariate, "proportion")) + ylab("LRI incidence rate per 1000")+
         guides(fill = guide_legend(nrow = 3))+
         goldenScatterCAtheme
     }
   
     else if (input$fit == "GAM"){
-      ggplot(data, aes(x=get(column), y=mean_value_lri)) +
+      ggplot(data, aes(x=get(column), y=log_mean_value_lri)) +
         geom_point(size=2, shape=21, alpha = 0.5, aes(fill = super_region_name))+
         scale_fill_manual(values = c(brewer.pal(7, "RdBu")))+
-        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'gam',level=input$ui_level_scatter/100, color = "black")+
+        geom_smooth(aes(x=get(column), y=log_mean_value_lri), method = 'gam',level=input$ui_level_scatter/100, color = "black")+
+        scale_y_continuous(breaks =breaks, labels = new_labels, limits = c(limit_min,limit_max))+
         xlab(paste(input$covariate, "proportion")) + ylab("LRI incidence rate per 1000")+
         guides(fill = guide_legend(nrow = 3))+
         goldenScatterCAtheme
     }
     
     else if (input$fit == "Loess"){
-      ggplot(data, aes(x=get(column), y=mean_value_lri)) +
+      ggplot(data, aes(x=get(column), y=log_mean_value_lri)) +
         geom_point(size=2, shape=21, alpha = 0.5, aes(fill = super_region_name))+
         scale_fill_manual(values = c(brewer.pal(7, "RdBu")))+
-        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'loess',level=input$ui_level_scatter/100, color = "black")+
+        geom_smooth(aes(x=get(column), y=log_mean_value_lri), method = 'loess',level=input$ui_level_scatter/100, color = "black")+
+        scale_y_continuous(breaks =breaks, labels = new_labels, limits = c(limit_min,limit_max))+
         xlab(paste(input$covariate, "proportion")) + ylab("LRI incidence rate per 1000")+
         guides(fill = guide_legend(nrow = 3))+
         goldenScatterCAtheme
     }
     
     else if (input$fit == "Quadratic"){
-      ggplot(data, aes(x=get(column), y=mean_value_lri)) +
+      ggplot(data, aes(x=get(column), y=log_mean_value_lri)) +
         geom_point(size=2, shape=21, alpha = 0.5, aes(fill = super_region_name))+
         scale_fill_manual(values = c(brewer.pal(7, "RdBu")))+
-        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'lm', formula = y~x+I(x^2),level=input$ui_level_scatter/100, color = "black")+
+        geom_smooth(aes(x=get(column), y=log_mean_value_lri), method = 'lm', formula = y~x+I(x^2),level=input$ui_level_scatter/100, color = "black")+
+        scale_y_continuous(breaks =breaks, labels = new_labels, limits = c(limit_min,limit_max))+
         xlab(paste(input$covariate, "proportion")) + ylab("LRI incidence rate per 1000")+
         guides(fill = guide_legend(nrow = 3))+
         goldenScatterCAtheme
     }
     else if (input$fit == "Robust quadratic"){
-      model_fit <- rlm(mean_value_lri ~ get(column) + I(get(column)^2),data = data, method = "MM")
+      model_fit <- rlm(log_mean_value_lri ~ get(column) + I(get(column)^2),data = data, method = "MM")
       new_data <- copy(data)
-      new_data <- new_data[, mean_value_lri := NA]
+      new_data <- new_data[, log_mean_value_lri := NA]
       x <- predict(model_fit,newdata = new_data,interval = 'confidence',level=input$ui_level_scatter/100)
-      new_data[, mean_value_lri := x[,"fit"]]
+      new_data[, log_mean_value_lri := x[,"fit"]]
       new_data[, lower_value_lri := x[,"lwr"]]
       new_data[, upper_value_lri := x[,"upr"]]
       
       
       #new_data$mean_value_lri <- predict(model_fit,newdata = new_data,interval = 'confidence', level = 0.9)
-      ggplot(data=data, aes(x=get(column), y=mean_value_lri)) +
+      ggplot(data=data, aes(x=get(column), y=log_mean_value_lri)) +
         geom_point(size=2, shape=21, alpha = 0.5, aes(fill = super_region_name))+
         scale_fill_manual(values = c(brewer.pal(7, "RdBu")))+
-        geom_line(data = new_data, aes(x=get(column), y=mean_value_lri,ymin=lower_value_lri,ymax=upper_value_lri),color = "black", size = 1)+
-        geom_ribbon(data = new_data, aes(x=get(column), y=mean_value_lri,ymin=lower_value_lri,ymax=upper_value_lri),alpha = .2)+
+        geom_line(data = new_data, aes(x=get(column), y=log_mean_value_lri,ymin=lower_value_lri,ymax=upper_value_lri),color = "black", size = 1)+
+        geom_ribbon(data = new_data, aes(x=get(column), y=log_mean_value_lri,ymin=lower_value_lri,ymax=upper_value_lri),alpha = .2)+
+        scale_y_continuous(breaks =breaks, labels = new_labels, limits = c(limit_min,limit_max))+
         xlab(paste(input$covariate, "proportion")) + ylab("LRI incidence rate per 1000")+
         guides(fill = guide_legend(nrow = 3))+
         goldenScatterCAtheme
@@ -159,10 +176,11 @@ server <- function(input, output) {
     
     
     else if (input$fit == "5th order polynomial"){
-      ggplot(data, aes(x=get(column), y=mean_value_lri)) +
+      ggplot(data, aes(x=get(column), y=log_mean_value_lri)) +
         geom_point(size=2, shape=21, alpha = 0.5, aes(fill = super_region_name))+
         scale_fill_manual(values = c(brewer.pal(7, "RdBu")))+
-        geom_smooth(aes(x=get(column), y=mean_value_lri), method = 'lm', formula = y ~ poly(x, 5),level=input$ui_level_scatter/100, color = "black")+
+        geom_smooth(aes(x=get(column), y=log_mean_value_lri), method = 'lm', formula = y ~ poly(x, 5),level=input$ui_level_scatter/100, color = "black")+
+        scale_y_continuous(breaks =breaks, labels = new_labels, limits = c(limit_min,limit_max))+
         xlab(paste(input$covariate, "proportion")) + ylab("LRI incidence rate per 1000")+
         guides(fill = guide_legend(nrow = 3))+
         goldenScatterCAtheme
@@ -170,21 +188,22 @@ server <- function(input, output) {
     else if (input$fit == "Robust linear"){
    
      
-       model_fit <- rlm(mean_value_lri ~ get(column),data = data, method = "MM")
+       model_fit <- rlm(log_mean_value_lri ~ get(column),data = data, method = "MM")
        new_data <- copy(data)
-       new_data <- new_data[, mean_value_lri := NA]
+       new_data <- new_data[, log_mean_value_lri := NA]
        x <- predict(model_fit,newdata = new_data,interval = 'confidence',level=input$ui_level_scatter/100)
-       new_data[, mean_value_lri := x[,"fit"]]
+       new_data[, log_mean_value_lri := x[,"fit"]]
        new_data[, lower_value_lri := x[,"lwr"]]
        new_data[, upper_value_lri := x[,"upr"]]
        
     
       #new_data$mean_value_lri <- predict(model_fit,newdata = new_data,interval = 'confidence', level = 0.9)
-      ggplot(data=data, aes(x=get(column), y=mean_value_lri)) +
+      ggplot(data=data, aes(x=get(column), y=log_mean_value_lri)) +
         geom_point(size=2, shape=21, alpha = 0.5, aes(fill = super_region_name))+
         scale_fill_manual(values = c(brewer.pal(7, "RdBu")))+
-        geom_line(data = new_data, aes(x=get(column), y=mean_value_lri,ymin=lower_value_lri,ymax=upper_value_lri),color = "black", size = 1)+
-        geom_ribbon(data = new_data, aes(x=get(column), y=mean_value_lri,ymin=lower_value_lri,ymax=upper_value_lri),alpha = .2)+
+        geom_line(data = new_data, aes(x=get(column), y=log_mean_value_lri,ymin=lower_value_lri,ymax=upper_value_lri),color = "black", size = 1)+
+        geom_ribbon(data = new_data, aes(x=get(column), y=log_mean_value_lri,ymin=lower_value_lri,ymax=upper_value_lri),alpha = .2)+
+        scale_y_continuous(breaks =breaks, labels = new_labels, limits = c(limit_min,limit_max))+
         xlab(paste(input$covariate, "proportion")) + ylab("LRI incidence rate per 1000")+
         guides(fill = guide_legend(nrow = 3))+
         goldenScatterCAtheme
@@ -200,8 +219,9 @@ server <- function(input, output) {
       label <- "PCV3 Vaccination proportion"
     }
     
+    
     hover <- input$plot_hover
-    point <- nearPoints(data, hover, threshold = 5, maxpoints = 1, addDist = TRUE, xvar = column, yvar = "mean_value_lri")
+    point <- nearPoints(data, hover, threshold = 5, maxpoints = 1, addDist = TRUE, xvar = column, yvar = "log_mean_value_lri")
     
      if (nrow(point) == 0) return(NULL)
      
