@@ -18,7 +18,7 @@ ui <- fluidPage(
                                                 min=1990, max=2019, value=2019, sep = "",
                                                 step=5, round=0)),
                              column(6,
-                                    sliderInput('ui_level', 'UI Level', 
+                                    sliderInput('ui_level', 'UI level', 
                                                 min=5, max=95, value=95, 
                                                 step=90, round=0))
                              
@@ -39,7 +39,7 @@ ui <- fluidPage(
                  # Input: Which covariate to plot on the x axis
                  
                  sliderInput(inputId = "fit",
-                             label = c("Degree of polynomial:"),
+                             label = c("Degree of polynomial"),
                              min=1, max=5, value=1, 
                              step=1, round=0
                  ),
@@ -47,8 +47,12 @@ ui <- fluidPage(
                              label = c("Robust"),
                              value = FALSE
                  ),
+                 sliderInput(inputId = 'ui_level_scatter', 
+                             label = 'UI level', 
+                             min=5, max=95, value=95, 
+                             step=5, round=0),
                  radioButtons(inputId = "covariate",
-                              label = c("Covariate:"),
+                              label = c("Covariate"),
                               choices = c("Hib3 vaccination", "PCV3 vaccination")
                  )
                ),
@@ -60,13 +64,9 @@ ui <- fluidPage(
              ),
              fluidRow(
                column(10,
-                      h4("Year"),
-                      sliderInput('year_scatter', 'Year', 
+                      sliderInput(inputId = 'year_scatter', 
+                                  label = 'Year', 
                                   min=1990, max=2019, value=2019, sep = "", 
-                                  step=5, round=0)),
-               column(6,
-                      sliderInput('ui_level_scatter', 'UI Level', 
-                                  min=5, max=95, value=95, 
                                   step=5, round=0)))
              
              

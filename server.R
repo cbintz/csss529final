@@ -9,8 +9,6 @@ setDT(data)
 # Multiply rates by 1000 to be per 1000
 cols_transform <- c("mean_value_lri", "upper_value_lri", "lower_value_lri")
 data[, (cols_transform) := lapply(.SD, "*", 1000), .SDcols = cols_transform]
-data[, log_mean_value_lri := log(mean_value_lri)]
-
 
 # Load in world data with geographical coordinates directly from ggplot2
 world_data <- ggplot2::map_data('world')
@@ -38,6 +36,11 @@ for (i in 1:length(old_names)){
 server <- function(input, output) {
 
   output$scatterPlot <- renderPlot({
+    # subset to year of interest
+    # Set breaks, limits before subsetting data.
+    limit_min = 30
+    limit_max = signif(max(data$mean_value_lri) + 1, 2)
+    breaks = seq(from = limit_min, to = limit_max, length.out = 6)
     # subset to year of interest
     data <- data[year_id == input$year_scatter]  
 
@@ -73,7 +76,7 @@ server <- function(input, output) {
       ## Legend
       legend.key = element_rect(fill = NA, color = NA),
       legend.position = "bottom",
-      #legend.title = element_blank(),
+      legend.title = element_blank(),
       ## Remove unhelpful gray background
       
       ## Gridlines (in this case, horizontal from left axis only
@@ -92,29 +95,22 @@ server <- function(input, output) {
     req(input$fit)
     req(input$covariate)
     req(input$ui_level_scatter)
-    breaks = as.numeric(quantile(data$log_mean_value_lri, probs = seq(0,1,0.25)))
-    labels = as.numeric(quantile(data$mean_value_lri, probs = seq(0,1,0.25)))
-    new_labels <- numeric(5)
-    for (label in 1:length(labels)){
-      new_labels[label] <- sprintf("%.0f", labels[label])  
-    }
-    limit_min  = min(data$log_mean_value_lri) - 1
-    limit_max  = max(data$log_mean_value_lri) + 1
+
     if(input$covariate == "Hib3 vaccination") {
       column <- "mean_value_hib"
     } else if (input$covariate == "PCV3 vaccination"){
       column <- "mean_value_pcv3"
     }
 
-        if(input$robust == TRUE){
+    if(input$robust == TRUE){
       my_method <- "lm_robust"
     } else my_method <- "lm"
 
     ggplot(data) +
-      geom_point(size=2, shape=21, alpha = 0.5, aes(fill = super_region_name, x=get(column), y=log_mean_value_lri))+
+      geom_point(size=2, shape=21, alpha = 0.5, aes(fill = Region, x=get(column), y=mean_value_lri))+
       scale_fill_manual(values = c(brewer.pal(7, "RdBu")))+
-      geom_smooth(aes(x=get(column), y=log_mean_value_lri), method = my_method, formula = y ~ poly(x, input$fit), level=input$ui_level_scatter/100, color = "black") +
-      scale_y_continuous(breaks =breaks, labels = new_labels, limits = c(limit_min,limit_max))+
+      geom_smooth(aes(x=get(column), y=mean_value_lri), method = my_method, formula = y ~ poly(x, input$fit), level=input$ui_level_scatter/100, color = "black") +
+      scale_y_continuous(breaks = breaks, label = function(x) round(x, 0), limits = c(limit_min,limit_max), trans = "log2")+
       xlab(paste(input$covariate, "proportion")) + ylab("LRI incidence rate per 1000")+
       guides(fill = guide_legend(nrow = 3))+
       goldenScatterCAtheme
@@ -131,7 +127,7 @@ server <- function(input, output) {
     
     
     hover <- input$plot_hover
-    point <- nearPoints(data, hover, threshold = 5, maxpoints = 1, addDist = TRUE, xvar = column, yvar = "log_mean_value_lri")
+    point <- nearPoints(data, hover, threshold = 5, maxpoints = 1, addDist = TRUE, xvar = column, yvar = "mean_value_lri")
     
      if (nrow(point) == 0) return(NULL)
      
@@ -155,6 +151,13 @@ server <- function(input, output) {
   # Confidence interval level selected in R Shiny app
   
   worldMaps <- function(df, world_data, input, legend.p = "none"){
+    # Set breaks, limits before subsetting data.
+    limit_min = 30
+    limit_max = signif(max(df$mean_value_lri) + 1, 2)
+    breaks = seq(from = limit_min, to = limit_max, length.out = 6)
+    
+    # Subset to year of interest
+    df <- df[year_id == input$year_map]
   
     # Function for setting the aesthetics of the plot
     my_theme <- function () { 
@@ -165,6 +168,7 @@ server <- function(input, output) {
                          panel.grid.minor = element_blank(),
                          panel.background = element_blank(), 
                          legend.position = legend.p,
+                         legend.text = element_text(size = 10),
                          legend.title = element_blank(),
                          text = element_text(size = 24),
                          panel.border = element_blank(), 
@@ -188,8 +192,8 @@ server <- function(input, output) {
     g <- ggplot() + geom_map_interactive(data = plotdf, map = world_data, color = 'gray70', 
                                          (aes(long, lat, map_id = region, fill = get(column), 
                                               tooltip = sprintf("%s<br/>%s", region, round(get(column), 1))))) +
-      scale_fill_gradientn(colours = rev(brewer.pal(7, "RdBu")), na.value = 'white', trans = "log", label = function(x) round(x, 0), 
-        limits = c(min(df$lower_value_lri),max(df$upper_value_lri))) +
+      scale_fill_gradientn(colours = rev(brewer.pal(7, "RdBu")), na.value = 'white', trans = "log2", 
+                           breaks = breaks, label = function(x) round(x, 0), limits = c(limit_min,limit_max)) +
       labs(title = NULL, x = NULL, y = NULL, caption = capt) +
       my_theme()
     
@@ -198,10 +202,8 @@ server <- function(input, output) {
   
   # Create the interactive world map
   output$distPlot <- renderGirafe({
-    # Subset to year of interest
-    data <- data[year_id == input$year_map]
     # Create the plots with each uncertainty level
-    ggmean <- worldMaps(data, world_data, input = list(ui_level = 50, year = input$year))
+    ggmean <- worldMaps(data, world_data, input = list(ui_level = 50, year_map = input$year_map))
     ggadjust <- worldMaps(data, world_data, input)
     legend_g <- get_legend(worldMaps(data, world_data, input, "right"))
     girafe(ggobj = plot_grid(plot_grid(ggmean, ggadjust), legend_g, ncol = 2, rel_widths = c(1, .1)), width_svg = 12, height_svg = 3)
