@@ -28,6 +28,17 @@ ui <- fluidPage(
 
     ),
     tabPanel("Scatter",
+             fluidRow(
+               column(6,
+                      sliderInput(inputId = 'year_scatter', 
+                                  label = 'Year', 
+                                  min=1990, max=2019, value=2019, sep = "", 
+                                  step=5, round=0)),
+               column(6,
+                      sliderInput(inputId = 'ui_level_scatter', 
+                                  label = 'UI level', 
+                                  min=5, max=95, value=95, 
+                                  step=5, round=0))),
              # Sidebar layout with input and output definitions ----
              sidebarLayout(
                
@@ -47,10 +58,6 @@ ui <- fluidPage(
                              label = c("Robust"),
                              value = FALSE
                  ),
-                 sliderInput(inputId = 'ui_level_scatter', 
-                             label = 'UI level', 
-                             min=5, max=95, value=95, 
-                             step=5, round=0),
                  radioButtons(inputId = "covariate",
                               label = c("Covariate"),
                               choices = c("Hib3 vaccination", "PCV3 vaccination")
@@ -61,13 +68,7 @@ ui <- fluidPage(
                             hover = hoverOpts("plot_hover", delay = 20, delayType = "debounce")),
                  uiOutput("hover_info")
                )
-             ),
-             fluidRow(
-               column(10,
-                      sliderInput(inputId = 'year_scatter', 
-                                  label = 'Year', 
-                                  min=1990, max=2019, value=2019, sep = "", 
-                                  step=5, round=0)))
+             )
              
              
     )
